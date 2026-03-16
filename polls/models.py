@@ -2,6 +2,14 @@ from django.contrib import admin
 from django.db import models
 import datetime
 from django.utils import timezone
+from django.db import models
+
+class Account(models.Model):
+    login = models.CharField(max_length=100, unique=True)
+    password = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.login
 
 class Question(models.Model):
     list_filter = ["pub_date"]

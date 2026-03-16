@@ -5,6 +5,47 @@ from django.urls import reverse
 from django.views import generic
 from django.utils import timezone
 from .models import Choice, Question
+import json
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.crsf import csrf_exempt
+from .models import Account
+
+@csrf_exempt
+def reg(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+
+            login = date.get("login")
+            password = data.get("password")
+
+            if not login or not password:
+                return JsonResponse(
+                    {"error": "login and password required"},
+                    status=400
+                )
+            if Account.objects.filter(login=login).exists():
+                return JsonResponse(
+                    {"error": "user already exists"},
+                    status=400
+                )
+
+            account=Account.objects.create(
+                login=login,
+                password=password
+            )
+
+            return JsonResponse(
+                {
+                    "message":"registered successfully",
+                    "id":account.id,
+                    "login": account.login
+                },
+                status=201
+            )
+        except json.JSONDecodeError:
+            return JsonResponse({"error":"invalid json"}, status=400)
+    return HttpResponse("Only POST method allowed")
 
 
 class IndexView(generic.ListView):
