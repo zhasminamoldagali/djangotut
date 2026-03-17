@@ -12,15 +12,12 @@ class Account(models.Model):
         return self.login
 
 class Question(models.Model):
-    list_filter = ["pub_date"]
-    search_fields = ["question_text"]
-    def was_published_recently(self):
-        now = timezone.now()
-        return now - datetime.timedelta(days=1) <= self.pub_date <= now
-        question_text = models.CharField(max_length=200)
+    question_text = models.CharField(max_length=200)
     pub_date = models.DateTimeField("date published")
+
     def __str__(self):
         return self.question_text
+
     @admin.display(
         boolean=True,
         ordering="pub_date",
@@ -29,7 +26,6 @@ class Question(models.Model):
     def was_published_recently(self):
         now = timezone.now()
         return now - datetime.timedelta(days=1) <= self.pub_date <= now
-
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)

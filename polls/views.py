@@ -7,46 +7,46 @@ from django.utils import timezone
 from .models import Choice, Question
 import json
 from django.http import JsonResponse, HttpResponse
-from django.views.decorators.crsf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt
 from .models import Account
 
 @csrf_exempt
 def reg(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
 
-            login = date.get("login")
-            password = data.get("password")
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-            if not login or not password:
-                return JsonResponse(
-                    {"error": "login and password required"},
-                    status=400
-                )
-            if Account.objects.filter(login=login).exists():
-                return JsonResponse(
-                    {"error": "user already exists"},
-                    status=400
-                )
+    login = data.get("login")
+    password = data.get("password")
 
-            account=Account.objects.create(
-                login=login,
-                password=password
-            )
+    if not login or not password:
+        return JsonResponse(
+            {"error": "login and password required"},
+            status=400
+        )
+    if Account.objects.filter(login=login).exists():
+        return JsonResponse(
+            {"error": "user already exists"},
+            status=400
+        )
 
-            return JsonResponse(
-                {
-                    "message":"registered successfully",
-                    "id":account.id,
-                    "login": account.login
-                },
-                status=201
-            )
-        except json.JSONDecodeError:
-            return JsonResponse({"error":"invalid json"}, status=400)
-    return HttpResponse("Only POST method allowed")
+    account=Account.objects.create(
+        login=login,
+        password=password
+    )
 
+    return JsonResponse(
+        {
+            "message":"registered successfully",
+            "id":account.id,
+            "login": account.login
+        },
+        status=201
+    )
 
 class IndexView(generic.ListView):
     template_name = "polls/index.html"
@@ -68,8 +68,6 @@ class DetailView(generic.DetailView):
         Excludes any questions that aren't published yet.
         """
         return Question.objects.filter(pub_date__lte=timezone.now())
-
-
 
 class ResultsView(generic.DetailView):
     model = Question
