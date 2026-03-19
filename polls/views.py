@@ -95,7 +95,8 @@ def vote(request, question_id):
         # with POST data. This prevents data from being posted twice if a
         # user hits the Back button.
         return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
-def acc_id_view(reg, id):
+@csrf_exempt
+def acc_id_view(req, id):
     if req.method == "GET":
         a = get_object_or_404(Account, pk = id)
         return JsonResponse({

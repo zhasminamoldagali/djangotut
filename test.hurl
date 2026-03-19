@@ -1,7 +1,2 @@
-POST 
-Content-Type:application/json
+GET http://127.0.0.1:8000/polls/acc/
 
-{
-    "login": "test"
-    "password": "12345"
-}
