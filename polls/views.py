@@ -95,4 +95,19 @@ def vote(request, question_id):
         # with POST data. This prevents data from being posted twice if a
         # user hits the Back button.
         return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
-    
+def acc_id_view(reg, id):
+    if req.method == "GET":
+        a = get_object_or_404(Account, pk = id)
+        return JsonResponse({
+            "Account": a.get_dict()
+        })
+    if req.method == "DELETE":
+        a = get_object_or_404(Account, pk = id)
+        a.delete()
+        return JsonResponse({
+            "message": "Account deleted"
+        })
+
+    return JsonResponse({
+        "error": "Method not allowed"
+    }, status=405)

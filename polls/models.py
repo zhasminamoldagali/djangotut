@@ -7,10 +7,13 @@ from django.db import models
 class Account(models.Model):
     login = models.CharField(max_length=100, unique=True)
     password = models.CharField(max_length=100)
-
     def __str__(self):
         return self.login
-
+    def get_dict(self):
+        return{
+            "login":self.login,
+            "password":self.password
+        }
 class Question(models.Model):
     question_text = models.CharField(max_length=200)
     pub_date = models.DateTimeField("date published")
