@@ -1,2 +1,2 @@
-GET http://127.0.0.1:8000/polls/acc/
+GET  http://127.0.0.1:8000/polls/acc/
 

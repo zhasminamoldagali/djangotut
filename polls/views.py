@@ -12,41 +12,44 @@ from .models import Account
 
 @csrf_exempt
 def reg(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Only POST allowed"}, status=405)
+    if request.method == "POST":
+        body = json.loads(request.body)
+        try:
+            data=json.loads(request.body)
 
-    try:
-        data = json.loads(request.body.decode("utf-8"))
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
+            login = data.get("login")
+            password = data.get("password")
 
-    login = data.get("login")
-    password = data.get("password")
+            if not login or not password:
+                return JsonResponse(
+                    {"error": "login and password required"},
+                    status=400
+                )
 
-    if not login or not password:
-        return JsonResponse(
-            {"error": "login and password required"},
-            status=400
-        )
-    if Account.objects.filter(login=login).exists():
-        return JsonResponse(
-            {"error": "user already exists"},
-            status=400
-        )
+            if Account.objects.filter(login=login).exists():
+                return JsonResponse(
+                    {"error": "user already exists"},
+                )
+        
+            account = Account.objects.create(
+                login=login,
+                password=password
+            )
 
-    account=Account.objects.create(
-        login=login,
-        password=password
-    )
+            return JsonResponse(
+                {
+                    "message": "registered successfully",
+                    "id": account.id,
+                    "login": account.login
+                },
+                status=201
+            )
+    
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "invalid json"}, status=400)
+    return HttpResponse("Only POST method allowed")
 
-    return JsonResponse(
-        {
-            "message":"registered successfully",
-            "id":account.id,
-            "login": account.login
-        },
-        status=201
-    )
+    
 
 class IndexView(generic.ListView):
     template_name = "polls/index.html"
@@ -58,8 +61,10 @@ class IndexView(generic.ListView):
         published in the future).
         """
         return Question.objects.filter(pub_date__lte=timezone.now()).order_by("-pub_date")[
-        :5
-    ]
+            :5
+        ]
+
+
 class DetailView(generic.DetailView):
     model = Question
     template_name = "polls/detail.html"
@@ -69,12 +74,13 @@ class DetailView(generic.DetailView):
         """
         return Question.objects.filter(pub_date__lte=timezone.now())
 
+
 class ResultsView(generic.DetailView):
     model = Question
     template_name = "polls/results.html"
 
+
 def vote(request, question_id):
-    return HttpResponse("You're voting on question %s." % question_id)
     question = get_object_or_404(Question, pk=question_id)
     try:
         selected_choice = question.choice_set.get(pk=request.POST["choice"])
@@ -95,43 +101,86 @@ def vote(request, question_id):
         # with POST data. This prevents data from being posted twice if a
         # user hits the Back button.
         return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
+
 @csrf_exempt
-def acc_id_view(req, id):
-    if req.method == "GET":
-        a = get_object_or_404(Account, pk = id)
+def acc_list_create(request):
+    if request.method == "GET":
+        accounts = Choice.objects.all()
+        data = []
+
+        for a in accounts:
+            data.append({
+                "id": a.id,
+                "username": a.username,
+                "email": a.email,
+                "choice_text": a.choice_text,
+                "votes": a.votes,
+            })
+
+        return JsonResponse(data, safe=False)
+
+    elif request.method == "POST":
+        body = json.loads(request.body)
+
+        a = Choice.objects.create(
+            question_id=body.get("question_id"),
+            choice_text=body.get("choice_text"),
+            votes=body.get("votes", 0),
+            username=body.get("username"),
+            email=body.get("email"),
+        )
+
         return JsonResponse({
-            "Account": a.get_dict()
-        })
-    if req.method == "DELETE":
-        a = get_object_or_404(Account, pk = id)
-        a.delete()
+            "id": a.id,
+            "username": a.username,
+            "email": a.email,
+            "choice_text": a.choice_text,
+            "votes": a.votes,
+        }, status=201)
+
+    return JsonResponse({"error": "Method not allowed"}, status=405)
+
+
+@csrf_exempt
+def acc_detail(request, id):
+    try:
+        a = Choice.objects.get(id=id)
+    except Choice.DoesNotExist:
+        return JsonResponse({"error": "Not found"}, status=404)
+
+    if request.method == "GET":
         return JsonResponse({
-            "message": "Account deleted"
-        })
-    if req.method == "PUT":
-        data = json.loads(req.body)
-        a = get_object_or_404(Account, pk=id)
-
-        a.name = data.get("name", a.name)
-        a.balance = data.get("balance", a.balance)
-
-        return JsonResponse({
-            "message":"Account updated",
-            "Account": a.get_dict()
+            "id": a.id,
+            "username": a.username,
+            "email": a.email,
+            "choice_text": a.choice_text,
+            "votes": a.votes,
         })
 
-    if req.method == "POST":
-        data = json.loads(req.body)
-        a = get_object_or_404(Account, pk=id)
+    elif request.method == "PATCH":
+        body = json.loads(request.body)
 
-        a.name = data.get("name", a.name)
-        a.balance = data.get("balance", a.balance)
+        if "username" in body:
+            a.username = body["username"]
+        if "email" in body:
+            a.email = body["email"]
+        if "choice_text" in body:
+            a.choice_text = body["choice_text"]
+        if "votes" in body:
+            a.votes = body["votes"]
+
         a.save()
 
         return JsonResponse({
-            "message": "account updated",
-            "Account": a.get_dict
+            "id": a.id,
+            "username": a.username,
+            "email": a.email,
+            "choice_text": a.choice_text,
+            "votes": a.votes,
         })
-    return JsonResponse({
-        "error": "Method not allowed"
-    }, status=405)
+
+    elif request.method == "DELETE":
+        a.delete()
+        return JsonResponse({"message": "Deleted"})
+
+    return JsonResponse({"error": "Method not allowed"}, status=405)

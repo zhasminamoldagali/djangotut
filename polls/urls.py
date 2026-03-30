@@ -1,15 +1,10 @@
-from django.urls import path
-from .views import reg
+from django.contrib import admin
+from django.urls import include, path
+from polls.views import acc_list_create, acc_detail
 
-from . import views
-
-app_name = "polls"
 urlpatterns = [
-    path("reg/", reg),
-    path("", views.IndexView.as_view(), name="index"),
-    path("<int:pk>/", views.DetailView.as_view(), name="detail"),
-    path("<int:pk>/results/", views.ResultsView.as_view(), name="results"),
-    path("<int:question_id>/vote/", views.vote, name="vote"),
-    path("acc/<int:id>", views.acc_id_view)
+    path("admin/", admin.site.urls),
+    path("", include("polls.urls")),
+    path("acc/", acc_list_create),
+    path("acc/<int:id>/", acc_detail),
 ]
-
