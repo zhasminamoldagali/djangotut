@@ -108,7 +108,30 @@ def acc_id_view(req, id):
         return JsonResponse({
             "message": "Account deleted"
         })
+    if req.method == "PUT":
+        data = json.loads(req.body)
+        a = get_object_or_404(Account, pk=id)
 
+        a.name = data.get("name", a.name)
+        a.balance = data.get("balance", a.balance)
+
+        return JsonResponse({
+            "message":"Account updated",
+            "Account": a.get_dict()
+        })
+
+    if req.method == "POST":
+        data = json.loads(req.body)
+        a = get_object_or_404(Account, pk=id)
+
+        a.name = data.get("name", a.name)
+        a.balance = data.get("balance", a.balance)
+        a.save()
+
+        return JsonResponse({
+            "message": "account updated",
+            "Account": a.get_dict
+        })
     return JsonResponse({
         "error": "Method not allowed"
     }, status=405)
