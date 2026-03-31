@@ -104,83 +104,37 @@ def vote(request, question_id):
 
 @csrf_exempt
 def acc_list_create(request):
-    if request.method == "GET":
-        accounts = Choice.objects.all()
-        data = []
-
-        for a in accounts:
-            data.append({
-                "id": a.id,
-                "username": a.username,
-                "email": a.email,
-                "choice_text": a.choice_text,
-                "votes": a.votes,
-            })
-
-        return JsonResponse(data, safe=False)
-
-    elif request.method == "POST":
-        body = json.loads(request.body)
-
-        a = Choice.objects.create(
-            question_id=body.get("question_id"),
-            choice_text=body.get("choice_text"),
-            votes=body.get("votes", 0),
-            username=body.get("username"),
-            email=body.get("email"),
-        )
-
+    if req.method == "GET":
+        a = get_object_or_404(Account, pk=id)
         return JsonResponse({
-            "id": a.id,
-            "username": a.username,
-            "email": a.email,
-            "choice_text": a.choice_text,
-            "votes": a.votes,
-        }, status=201)
-
-    return JsonResponse({"error": "Method not allowed"}, status=405)
-
-
-@csrf_exempt
-def acc_detail(request, id):
-    try:
-        a = Choice.objects.get(id=id)
-    except Choice.DoesNotExist:
-        return JsonResponse({"error": "Not found"}, status=404)
-
-    if request.method == "GET":
-        return JsonResponse({
-            "id": a.id,
-            "username": a.username,
-            "email": a.email,
-            "choice_text": a.choice_text,
-            "votes": a.votes,
+            "Account": a.get_dict()
         })
-
-    elif request.method == "PATCH":
-        body = json.loads(request.body)
-
-        if "username" in body:
-            a.username = body["username"]
-        if "email" in body:
-            a.email = body["email"]
-        if "choice_text" in body:
-            a.choice_text = body["choice_text"]
-        if "votes" in body:
-            a.votes = body["votes"]
-
-        a.save()
-
-        return JsonResponse({
-            "id": a.id,
-            "username": a.username,
-            "email": a.email,
-            "choice_text": a.choice_text,
-            "votes": a.votes,
-        })
-
-    elif request.method == "DELETE":
+    if req.method == "DELETE":
+        a = get_object_or_404(Account, pk=id)
         a.delete()
-        return JsonResponse({"message": "Deleted"})
-
-    return JsonResponse({"error": "Method not allowed"}, status=405)
+        return JsonResponse({
+            "message": "Account deleted"
+        })
+    if req.method == "POST":
+        data = json.loads(req.body)
+        a=Account.objects.create(
+            name=data.get("name"),
+            balance = data.get("balance")
+        )
+        return JsonResponse({
+            "message":"Account created",
+            "Account": a.get_dict()
+        })
+    if req.method == "PUT":
+        data = json.loads(req.body)
+        a=get_object_or_404(Account, pk=id)
+        a=data.get("balance", a.balance)
+        a.save()
+        return JsonResponse({
+            "message":"account updated",
+            "Account":a.get_dict()
+        })
+        
+    return JsonResponse ({
+        "error": "Method not allowed"
+    }, status=405)
