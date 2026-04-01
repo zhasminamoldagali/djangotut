@@ -135,9 +135,9 @@ def acc_detail(request, id):
             "Account":a.get_dict()
         })
     if request.method == "GET":
-        accounts = Account.objects.all()
+        a=get_object_or_404(Account, pk=id)
         return JsonResponse({
-            "Accounts": a.get_dict()
+            "Account": a.get_dict()
         })
     if request.method == "DELETE":
         a = get_object_or_404(Account, pk=id)
