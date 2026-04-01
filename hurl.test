@@ -1,0 +1,7 @@
+POST http://127.0.0.1:8000/acc/
+Content-Type: application/json
+{
+"name":"ZHA"
+"balance":1000
+}
+

@@ -97,44 +97,55 @@ def vote(request, question_id):
     else:
         selected_choice.votes = F("votes") + 1
         selected_choice.save()
-        # Always return an HttpResponseRedirect after successfully dealing
-        # with POST data. This prevents data from being posted twice if a
-        # user hits the Back button.
         return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
 
 @csrf_exempt
 def acc_list_create(request):
-    if req.method == "GET":
-        a = get_object_or_404(Account, pk=id)
-        return JsonResponse({
-            "Account": a.get_dict()
-        })
-    if req.method == "DELETE":
-        a = get_object_or_404(Account, pk=id)
-        a.delete()
-        return JsonResponse({
-            "message": "Account deleted"
-        })
-    if req.method == "POST":
-        data = json.loads(req.body)
+    if request.method == "POST":
+        data = json.loads(request.body)
         a=Account.objects.create(
-            name=data.get("name"),
-            balance = data.get("balance")
+            login=data.get("login"),
+            password = data.get("password")
         )
         return JsonResponse({
             "message":"Account created",
             "Account": a.get_dict()
         })
-    if req.method == "PUT":
-        data = json.loads(req.body)
-        a=get_object_or_404(Account, pk=id)
-        a=data.get("balance", a.balance)
-        a.save()
+
+    if request.method == "GET":
+        accounts = Account.objects.all()
         return JsonResponse({
-            "message":"account updated",
-            "Account":a.get_dict()
+            "Accounts": [a.get_dict() for a in accounts]
         })
         
     return JsonResponse ({
         "error": "Method not allowed"
     }, status=405)
+
+@csrf_exempt
+def acc_detail(request, id):
+    if request.method == "PUT":
+        data = json.loads(request.body)
+        a=get_object_or_404(Account, pk=id)
+        a.login=data.get("login", a.login)
+        a.password=data.get("password", a.password)
+        a.save()
+        return JsonResponse({
+            "message":"account updated",
+            "Account":a.get_dict()
+        })
+    if request.method == "GET":
+        accounts = Account.objects.all()
+        return JsonResponse({
+            "Accounts": a.get_dict()
+        })
+    if request.method == "DELETE":
+        a = get_object_or_404(Account, pk=id)
+        a.delete()
+        return JsonResponse({
+            "message": "Account deleted"
+        })
+    
+        return JsonResponse ({
+        "error": "Method not allowed"
+        }, status=405)
